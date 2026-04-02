@@ -8,10 +8,12 @@ Last updated: 2026-04-02
 - Do not expect frontend-only fields like `totalDiscovered`, `completed`, `failed`, `elapsedMs`, or `etaMs`.
 - Real progress fields are:
   - `phase`: `'discovering' | 'crawling' | 'packaging' | 'done'`
-  - `currentUrl`, `currentStep`, `currentAsset`
+  - `currentUrl`, `currentStep`, `currentAsset`, `currentAssets`
   - `pagesCompleted`, `pagesTotal`, `imagesCompleted`
   - `startedAt`, `updatedAt`
 - UI should derive elapsed time from `Date.now() - startedAt` and ETA from completed vs total pages.
+- `currentAssets` is the authoritative list of images being downloaded right now.
+- `currentAsset` is only a convenience fallback and should not be treated as the full list.
 
 ## Completion Handling
 
@@ -38,3 +40,4 @@ Last updated: 2026-04-02
 - `initProgress(jobId)` may run more than once for the same job.
 - Preserve `startedAt` and existing counters if the progress entry already exists.
 - `imagesCompleted` must accumulate from the current progress entry, not from a hardcoded zero.
+- Active image URLs should be added on download start and removed on finish so the UI can show a live list.

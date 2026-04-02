@@ -6,6 +6,11 @@ import type { JobImage, PageImage } from './types'
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024
 const CONCURRENCY = 5
 
+interface ImageDownloadProgress {
+  asset: string
+  status: 'start' | 'finish'
+}
+
 // ─── Multi-page version ────────────────────────────────────────────────────
 
 export async function downloadImagesForPage(
@@ -13,7 +18,7 @@ export async function downloadImagesForPage(
   jobId: string,
   pageIndex: number,   // 0-based; used for filename prefix "page-001"
   baseUrl: string,
-  onProgress?: (asset: string) => void,
+  onProgress?: (progress: ImageDownloadProgress) => void,
 ): Promise<{ images: PageImage[]; urlToLocal: Map<string, string> }> {
   const urls = extractImageUrls(html, baseUrl)
 
@@ -27,11 +32,15 @@ export async function downloadImagesForPage(
   for (let i = 0; i < urls.length; i += CONCURRENCY) {
     const batch = urls.slice(i, i + CONCURRENCY)
     const batchResults = await Promise.all(
-      batch.map((url, batchIdx) => {
+      batch.map(async (url, batchIdx) => {
         const imgIndex = i + batchIdx
         const filenameBase = `${pagePrefix}-img-${String(imgIndex).padStart(3, '0')}`
-        if (onProgress) onProgress(url)
-        return downloadOnePageImage(url, filenameBase, imagesDir)
+        onProgress?.({ asset: url, status: 'start' })
+        try {
+          return await downloadOnePageImage(url, filenameBase, imagesDir)
+        } finally {
+          onProgress?.({ asset: url, status: 'finish' })
+        }
       }),
     )
     for (const r of batchResults) {

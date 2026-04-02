@@ -4,7 +4,7 @@ import { scrape } from './scraper'
 import { convertToMarkdown } from './converter'
 import { downloadImagesForPage } from './images'
 import { extractLinks } from './links'
-import { initProgress, setProgress, deleteProgress, getProgress } from './progress'
+import { initProgress, setProgress, deleteProgress, getProgress, addCurrentAsset, removeCurrentAsset, clearCurrentAssets } from './progress'
 import type { CrawlParams, CrawlResult, PageResult, PageImage } from './types'
 
 const PAGE_TIMEOUT_MS = 30_000
@@ -59,6 +59,7 @@ export async function crawl(params: CrawlParams, jobId: string): Promise<CrawlRe
     clearTimeout(globalTimer)
   }
 
+  clearCurrentAssets(jobId)
   setProgress(jobId, { phase: 'packaging' })
 
   const status = aborted || (results.length >= maxPages && queue.length > 0) ? 'partial' : 'success'
@@ -109,7 +110,6 @@ async function processPage(input: ProcessPageInput): Promise<{
   setProgress(jobId, {
     currentUrl: item.url,
     currentStep: 'loading page',
-    currentAsset: null,
   })
 
   const scrapeParams = {
@@ -154,7 +154,14 @@ async function processPage(input: ProcessPageInput): Promise<{
       jobId,
       pageIndex,
       scrapeResult.finalUrl,
-      (asset) => setProgress(jobId, { currentAsset: asset }),
+      ({ asset, status }) => {
+        if (status === 'start') {
+          addCurrentAsset(jobId, asset)
+          return
+        }
+
+        removeCurrentAsset(jobId, asset)
+      },
     )
     images = result.images
     urlToLocal = result.urlToLocal
@@ -164,7 +171,7 @@ async function processPage(input: ProcessPageInput): Promise<{
     })
   } catch { /* image failure doesn't fail the page */ }
 
-  setProgress(jobId, { currentStep: 'converting to markdown', currentAsset: null })
+  setProgress(jobId, { currentStep: 'converting to markdown' })
 
   const markdown = convertToMarkdown(scrapeResult.html, scrapeResult.finalUrl, urlToLocal)
 

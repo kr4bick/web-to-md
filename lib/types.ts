@@ -39,6 +39,7 @@ export interface CrawlProgress {
   currentUrl: string | null
   currentStep: string | null
   currentAsset: string | null
+  currentAssets: string[]
   pagesCompleted: number
   pagesTotal: number
   imagesCompleted: number

@@ -42,6 +42,16 @@ function getPhaseLabel(phase: CrawlProgress['phase']): string {
   }
 }
 
+function truncateAsset(asset: string): string {
+  try {
+    const url = new URL(asset)
+    const name = url.pathname.split('/').filter(Boolean).pop()
+    return name ? `${url.hostname}/${name}` : asset
+  } catch {
+    return asset
+  }
+}
+
 export default function ProgressView({ jobId, onComplete }: ProgressViewProps) {
   const [progress, setProgress] = useState<CrawlProgress | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -119,6 +129,9 @@ export default function ProgressView({ jobId, onComplete }: ProgressViewProps) {
       ? `${progress.pagesCompleted} of ${progress.pagesTotal} pages`
       : 'Starting…'
     : 'Starting…'
+  const activeAssets = progress?.currentAssets ?? []
+  const visibleAssets = activeAssets.slice(0, 5)
+  const hiddenAssetsCount = Math.max(0, activeAssets.length - visibleAssets.length)
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
@@ -168,10 +181,21 @@ export default function ProgressView({ jobId, onComplete }: ProgressViewProps) {
               <span className="text-gray-600">{progress.currentStep}</span>
             </div>
           )}
-          {progress.currentAsset && (
+          {activeAssets.length > 0 && (
             <div className="flex gap-2">
-              <span className="text-gray-400 shrink-0 w-16">Asset</span>
-              <span className="truncate text-gray-600 font-mono text-xs">{progress.currentAsset}</span>
+              <span className="text-gray-400 shrink-0 w-16">Images</span>
+              <div className="min-w-0 space-y-1">
+                {visibleAssets.map((asset, index) => (
+                  <div key={`${asset}-${index}`} className="truncate text-gray-600 font-mono text-xs">
+                    {truncateAsset(asset)}
+                  </div>
+                ))}
+                {hiddenAssetsCount > 0 && (
+                  <div className="text-xs text-gray-400">
+                    +{hiddenAssetsCount} more
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -193,6 +217,12 @@ export default function ProgressView({ jobId, onComplete }: ProgressViewProps) {
             <div>
               <span className="text-gray-500 font-medium">{progress.imagesCompleted}</span>
               <span className="ml-1">images downloaded</span>
+            </div>
+          )}
+          {activeAssets.length > 0 && (
+            <div>
+              <span className="text-gray-500 font-medium">{activeAssets.length}</span>
+              <span className="ml-1">loading now</span>
             </div>
           )}
         </div>
