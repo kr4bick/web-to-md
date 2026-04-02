@@ -276,6 +276,53 @@ Two separate Railway services. `railway.json` configures Dockerfile builder + he
 
 ---
 
+## Testing
+
+### Framework
+- **Vitest** + **React Testing Library** (`@testing-library/react`, `@testing-library/user-event`)
+- Config: `vitest.config.ts` — jsdom environment, globals, `@` alias
+- Setup: `vitest.setup.ts` — imports `@testing-library/jest-dom`
+
+### Commands
+```bash
+npm run test:run   # run all tests once (CI mode)
+npm run test       # watch mode
+```
+
+### Test file locations
+| Source | Tests |
+|--------|-------|
+| `lib/foo.ts` | `lib/__tests__/foo.test.ts` |
+| `components/Foo.tsx` | `components/__tests__/Foo.test.tsx` |
+
+### What is already tested
+- `lib/links.ts` — extractLinks: filtering, normalization, deduplication, auth-path skipping
+- `lib/progress.ts` — full API: init, set, get, add/remove/clear assets, currentAsset invariant
+- `components/ParseForm` — render, 202 flow, form locking, error state, multi-page toggle
+- `components/ClearDataButton` — confirm flow, DELETE call, router.refresh
+- `components/ResultView` — error state, summary, pages count, ZIP link
+- `components/SitemapTree` — status icons, links, nesting, title fallback
+- `components/HistoryList` — empty state, rows, columns, status badges
+
+### Mocking conventions
+```ts
+// next/navigation
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
+
+// fetch
+vi.stubGlobal('fetch', vi.fn())
+const mockFetch = vi.mocked(fetch)
+mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({...}), { status: 200 }))
+```
+
+### Rules for agents
+- **Run `npm run test:run` after every code change.** Fix failures before finishing.
+- **New lib function** → add `lib/__tests__/<file>.test.ts`
+- **New or modified component** → add/update `components/__tests__/<Component>.test.tsx`
+- Minimum coverage: happy path + one error/edge case per unit; render + interaction + conditional states per component
+
+---
+
 ## Common pitfalls
 
 1. **`params` is async**: `const { id } = await params` in route handlers and page components.
