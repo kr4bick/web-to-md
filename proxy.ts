@@ -18,7 +18,7 @@ function getAllowedIps(): string[] {
   return env.split(',').map(ip => ip.trim()).filter(Boolean)
 }
 
-const HEALTHCHECK_PATHS = ['/api/history']
+const HEALTHCHECK_PATHS = ['/api/history', '/api/debug']
 
 export async function proxy(request: NextRequest) {
   // Allow healthcheck paths through without IP check
