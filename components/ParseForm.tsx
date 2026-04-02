@@ -27,14 +27,18 @@ export default function ParseForm() {
   const [error, setError] = useState<string | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
   const [result, setResult] = useState<ParseJob | null>(null)
+  const isInterfaceLocked = loading || jobId !== null
 
   const handleComplete = useCallback((job: ParseJob) => {
+    setLoading(false)
     setJobId(null)
     setResult(job)
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (isInterfaceLocked) return
+
     setLoading(true)
     setError(null)
     setResult(null)
@@ -88,200 +92,235 @@ export default function ParseForm() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1.5">
-            URL
-          </label>
-          <input
-            id="url"
-            type="url"
-            required
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full"
-          />
-        </div>
+      <div className="relative">
+        <form
+          onSubmit={handleSubmit}
+          aria-busy={isInterfaceLocked}
+          className={`space-y-4 transition-opacity ${isInterfaceLocked ? 'opacity-60' : ''}`}
+        >
+          <fieldset disabled={isInterfaceLocked} className="space-y-4">
+            <div>
+              <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1.5">
+                URL
+              </label>
+              <input
+                id="url"
+                type="url"
+                required
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full"
+              />
+            </div>
 
-        <div>
-          <label htmlFor="mode" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Mode
-          </label>
-          <select
-            id="mode"
-            value={mode}
-            onChange={(e) => setMode(e.target.value as ParseMode)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
-          >
-            <option value="simple">Simple</option>
-            <option value="auth">Auth</option>
-            <option value="interactive">Interactive</option>
-          </select>
-        </div>
+            <div>
+              <label htmlFor="mode" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Mode
+              </label>
+              <select
+                id="mode"
+                value={mode}
+                onChange={(e) => setMode(e.target.value as ParseMode)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
+              >
+                <option value="simple">Simple</option>
+                <option value="auth">Auth</option>
+                <option value="interactive">Interactive</option>
+              </select>
+            </div>
 
-        {/* Multi-page toggle */}
-        <div className="flex items-center gap-2">
-          <input
-            id="multiPage"
-            type="checkbox"
-            checked={multiPage}
-            onChange={(e) => setMultiPage(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-          />
-          <label htmlFor="multiPage" className="text-sm font-medium text-gray-700">
-            Multi-page crawl
-          </label>
-        </div>
-
-        {/* Multi-page sub-options */}
-        {multiPage && (
-          <div className="ml-6 space-y-4 border-l border-gray-200 pl-4">
+            {/* Multi-page toggle */}
             <div className="flex items-center gap-2">
               <input
-                id="parseLinked"
+                id="multiPage"
                 type="checkbox"
-                checked={parseLinked}
-                onChange={(e) => setParseLinked(e.target.checked)}
+                checked={multiPage}
+                onChange={(e) => setMultiPage(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
               />
-              <label htmlFor="parseLinked" className="text-sm font-medium text-gray-700">
-                Parse linked pages
+              <label htmlFor="multiPage" className="text-sm font-medium text-gray-700">
+                Multi-page crawl
               </label>
             </div>
 
-            {parseLinked && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label htmlFor="depth" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Depth
-                    </label>
-                    <input
-                      id="depth"
-                      type="number"
-                      min={1}
-                      max={5}
-                      value={depth}
-                      onChange={(e) => setDepth(Number(e.target.value))}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="maxPages" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Max pages
-                    </label>
-                    <input
-                      id="maxPages"
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={maxPages}
-                      onChange={(e) => setMaxPages(Number(e.target.value))}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="concurrency" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Concurrency
-                    </label>
-                    <input
-                      id="concurrency"
-                      type="number"
-                      min={1}
-                      max={5}
-                      value={concurrency}
-                      onChange={(e) => setConcurrency(Number(e.target.value))}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
-                    />
-                  </div>
+            {/* Multi-page sub-options */}
+            {multiPage && (
+              <div className="ml-6 space-y-4 border-l border-gray-200 pl-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="parseLinked"
+                    type="checkbox"
+                    checked={parseLinked}
+                    onChange={(e) => setParseLinked(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  />
+                  <label htmlFor="parseLinked" className="text-sm font-medium text-gray-700">
+                    Parse linked pages
+                  </label>
                 </div>
 
-                <div>
-                  <label htmlFor="sameDomain" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Same domain mode
-                  </label>
-                  <select
-                    id="sameDomain"
-                    value={sameDomain}
-                    onChange={(e) => setSameDomain(e.target.value as SameDomainMode)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
-                  >
-                    <option value="hostname">same hostname</option>
-                    <option value="origin">same origin</option>
-                  </select>
-                </div>
+                {parseLinked && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label htmlFor="depth" className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Depth
+                        </label>
+                        <input
+                          id="depth"
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={depth}
+                          onChange={(e) => setDepth(Number(e.target.value))}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="maxPages" className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Max pages
+                        </label>
+                        <input
+                          id="maxPages"
+                          type="number"
+                          min={1}
+                          max={50}
+                          value={maxPages}
+                          onChange={(e) => setMaxPages(Number(e.target.value))}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="concurrency" className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Concurrency
+                        </label>
+                        <input
+                          id="concurrency"
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={concurrency}
+                          onChange={(e) => setConcurrency(Number(e.target.value))}
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="sameDomain" className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Same domain mode
+                      </label>
+                      <select
+                        id="sameDomain"
+                        value={sameDomain}
+                        onChange={(e) => setSameDomain(e.target.value as SameDomainMode)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
+                      >
+                        <option value="hostname">same hostname</option>
+                        <option value="origin">same origin</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Advanced options */}
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
-          >
-            <span>{showAdvanced ? '▾' : '▸'}</span>
-            <span>Advanced options</span>
-          </button>
+            {/* Advanced options */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
+              >
+                <span>{showAdvanced ? '▾' : '▸'}</span>
+                <span>Advanced options</span>
+              </button>
 
-          {showAdvanced && (
-            <div className="mt-4 space-y-4 pl-4 border-l border-gray-200">
-              <div>
-                <label htmlFor="cookies" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Cookies
-                </label>
-                <textarea
-                  id="cookies"
-                  value={cookies}
-                  onChange={(e) => setCookies(e.target.value)}
-                  placeholder="session=abc; token=xyz"
-                  rows={2}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
-                />
-              </div>
+              {showAdvanced && (
+                <div className="mt-4 space-y-4 pl-4 border-l border-gray-200">
+                  <div>
+                    <label htmlFor="cookies" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Cookies
+                    </label>
+                    <textarea
+                      id="cookies"
+                      value={cookies}
+                      onChange={(e) => setCookies(e.target.value)}
+                      placeholder="session=abc; token=xyz"
+                      rows={2}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="storageState" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Storage State (JSON)
-                </label>
-                <textarea
-                  id="storageState"
-                  value={storageState}
-                  onChange={(e) => setStorageState(e.target.value)}
-                  placeholder={'{"cookies":[],"origins":[]}'}
-                  rows={3}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="storageState" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Storage State (JSON)
+                    </label>
+                    <textarea
+                      id="storageState"
+                      value={storageState}
+                      onChange={(e) => setStorageState(e.target.value)}
+                      placeholder={'{"cookies":[],"origins":[]}'}
+                      rows={3}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="waitSelector" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Wait Selector
-                </label>
-                <input
-                  id="waitSelector"
-                  type="text"
-                  value={waitSelector}
-                  onChange={(e) => setWaitSelector(e.target.value)}
-                  placeholder="#main-content"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
-                />
+                  <div>
+                    <label htmlFor="waitSelector" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Wait Selector
+                    </label>
+                    <input
+                      id="waitSelector"
+                      type="text"
+                      value={waitSelector}
+                      onChange={(e) => setWaitSelector(e.target.value)}
+                      placeholder="#main-content"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isInterfaceLocked}
+              className="bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Starting…' : jobId ? 'Parsing…' : 'Parse'}
+            </button>
+          </fieldset>
+        </form>
+
+        {isInterfaceLocked && (
+          <div className="absolute inset-0 z-10 flex cursor-progress justify-center pt-2">
+            <div
+              aria-live="polite"
+              className="flex max-w-sm items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm"
+            >
+              <svg
+                className="animate-spin h-4 w-4 text-gray-500 shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-700">{loading ? 'Starting parse…' : 'Parsing in progress…'}</p>
+                <p className="text-xs text-gray-500">
+                  {loading
+                    ? 'Waiting for the parser service to accept the job.'
+                    : 'Form controls will unlock automatically when the current job completes.'}
+                </p>
               </div>
             </div>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading || jobId !== null}
-          className="bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Parse
-        </button>
-      </form>
+          </div>
+        )}
+      </div>
 
       {loading && (
         <div className="flex items-center gap-3 text-gray-500">
@@ -289,7 +328,7 @@ export default function ParseForm() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <span className="text-sm">Connecting…</span>
+          <span className="text-sm">Starting parse…</span>
         </div>
       )}
 
