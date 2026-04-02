@@ -55,7 +55,7 @@ export default function ResultView({ job }: { job: ParseJob }) {
       {pages.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
-          <SitemapTree pages={pages} />
+          <SitemapTree pages={pages} jobId={job.id} />
         </div>
       )}
 
