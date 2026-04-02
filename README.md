@@ -1,6 +1,6 @@
 # Web Parser
 
-Web Parser is a Next.js application that converts any public webpage into clean Markdown. It supports three parsing modes: simple HTTP fetch, auth-aware fetch with custom cookies or Playwright storage state, and interactive rendering via a headless Chromium browser for JavaScript-heavy pages. Results are stored locally and available for download.
+Web Parser is a Next.js application that converts any public webpage into clean Markdown. It supports two parsing modes: simple parsing for fast single-page runs, and advance parsing with cookies, storage state, and browser-driven rendering for JavaScript-heavy pages. Results are stored locally and available for download.
 
 ## Local Development
 

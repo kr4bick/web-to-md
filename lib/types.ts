@@ -1,4 +1,6 @@
-export type ParseMode = 'simple' | 'auth' | 'interactive'
+export type ParseMode = 'simple' | 'advance'
+export type LegacyParseMode = 'auth' | 'interactive'
+export type StoredParseMode = ParseMode | LegacyParseMode
 export type ParseStatus = 'pending' | 'running' | 'success' | 'partial' | 'error'
 
 // Single image within one page
@@ -53,7 +55,7 @@ export interface ParseJob {
   final_url: string | null
   title: string | null
   status: ParseStatus
-  mode: ParseMode
+  mode: StoredParseMode
   markdown: string | null
   error: string | null
   images: string | null       // JSON JobImage[] — legacy single-page field
@@ -71,7 +73,7 @@ export interface ParseJobSummary {
   final_url: string | null
   title: string | null
   status: ParseStatus
-  mode: ParseMode
+  mode: StoredParseMode
   error: string | null
   summary: string | null
   page_count: number

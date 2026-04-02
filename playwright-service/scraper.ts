@@ -2,7 +2,7 @@ import { chromium } from 'playwright'
 
 interface ScrapeParams {
   url: string
-  mode: 'simple' | 'auth' | 'interactive'
+  mode: 'simple' | 'advance' | 'auth' | 'interactive'
   cookies?: string
   storageState?: string
   waitSelector?: string
@@ -41,13 +41,15 @@ function parseCookieString(
 
 async function scrapeInner(params: ScrapeParams): Promise<ScrapeResult> {
   const { url, mode, cookies, storageState, waitSelector } = params
+  const canHydrateSession = mode !== 'simple'
+  const usesInteractiveFlow = mode === 'advance' || mode === 'interactive'
 
   const browser = await chromium.launch({ headless: true })
 
   try {
     let context: Awaited<ReturnType<typeof browser.newContext>>
 
-    if ((mode === 'auth' || mode === 'interactive') && storageState) {
+    if (canHydrateSession && storageState) {
       context = await browser.newContext({
         ...CONTEXT_SETTINGS,
         storageState: JSON.parse(storageState),
@@ -56,13 +58,13 @@ async function scrapeInner(params: ScrapeParams): Promise<ScrapeResult> {
       context = await browser.newContext(CONTEXT_SETTINGS)
     }
 
-    if ((mode === 'auth' || mode === 'interactive') && cookies) {
+    if (canHydrateSession && cookies) {
       await context.addCookies(parseCookieString(cookies, url))
     }
 
     const page = await context.newPage()
 
-    if (mode === 'simple' || mode === 'auth') {
+    if (!usesInteractiveFlow) {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
       if (waitSelector) await page.waitForSelector(waitSelector, { timeout: 10000 })
       for (let i = 0; i < 5; i++) {
@@ -72,7 +74,7 @@ async function scrapeInner(params: ScrapeParams): Promise<ScrapeResult> {
       return { html: await page.content(), title: await page.title(), finalUrl: page.url() }
     }
 
-    // interactive
+    // advance / interactive
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
     if (waitSelector) await page.waitForSelector(waitSelector, { timeout: 10000 })
 

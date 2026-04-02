@@ -51,7 +51,7 @@ export default function LandingPage() {
         <ol className="space-y-4">
           {[
             'Paste a URL into the parser',
-            'Optionally pass cookies or session state for authenticated pages',
+            'Switch to advance mode when you need cookies, storage state, or crawl settings',
             'A real Chromium browser opens and renders the page',
             'Main content is extracted and converted to clean Markdown',
             'Result is saved — download as .md or .zip with images',
@@ -75,7 +75,7 @@ export default function LandingPage() {
         </h2>
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[
-            'Three parse modes: Simple, Auth, Interactive',
+            'Two parse modes: Simple and Advance',
             'Cookie and storage state injection',
             'Auto-scroll and consent banner handling',
             'Image download and local path rewriting',

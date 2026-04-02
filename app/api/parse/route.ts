@@ -1,12 +1,12 @@
 import { z } from 'zod'
-import { createJob, updateJob, getJob } from '@/lib/db'
+import { createJob, updateJob } from '@/lib/db'
 import { crawl } from '@/lib/crawler'
 import { initProgress, deleteProgress } from '@/lib/progress'
-import type { CrawlParams } from '@/lib/types'
+import type { CrawlParams, ParseMode } from '@/lib/types'
 
 const schema = z.object({
   url: z.string().url(),
-  mode: z.enum(['simple', 'auth', 'interactive']).default('simple'),
+  mode: z.enum(['simple', 'advance', 'auth', 'interactive']).default('simple'),
   cookies: z.string().max(10_000).optional(),
   storageState: z.string().max(50_000).optional(),
   waitSelector: z.string().max(200).optional(),
@@ -16,6 +16,10 @@ const schema = z.object({
   concurrency: z.number().int().min(1).max(5).default(3),
   sameDomain: z.enum(['hostname', 'origin']).default('hostname'),
 })
+
+function normalizeParseMode(mode: z.infer<typeof schema>['mode']): ParseMode {
+  return mode === 'simple' ? 'simple' : 'advance'
+}
 
 export async function POST(request: Request) {
   let body: unknown
@@ -28,7 +32,8 @@ export async function POST(request: Request) {
     return Response.json({ error }, { status: 400 })
   }
 
-  const { url, mode, cookies, storageState, waitSelector, multiPage, depth, maxPages, concurrency, sameDomain } = parsed.data
+  const { url, mode: requestedMode, cookies, storageState, waitSelector, multiPage, depth, maxPages, concurrency, sameDomain } = parsed.data
+  const mode = normalizeParseMode(requestedMode)
 
   if (storageState) {
     try { JSON.parse(storageState) }

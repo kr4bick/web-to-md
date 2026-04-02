@@ -78,7 +78,7 @@ app/                              ← git root, Next.js project
 ```typescript
 {
   url: string
-  mode?: 'simple' | 'auth' | 'interactive'  // default: 'simple'
+  mode?: 'simple' | 'advance'  // default: 'simple'
   cookies?: string
   storageState?: string
   waitSelector?: string
@@ -140,7 +140,7 @@ Table: `parse_jobs`
 | `final_url` | TEXT | after redirects |
 | `title` | TEXT | first page title |
 | `status` | TEXT | `pending\|running\|success\|partial\|error` |
-| `mode` | TEXT | `simple\|auth\|interactive` |
+| `mode` | TEXT | `simple\|advance` for new jobs; legacy rows may still contain `auth\|interactive` |
 | `markdown` | TEXT | legacy single-page markdown |
 | `images` | TEXT | legacy JSON `JobImage[]` |
 | `pages` | TEXT | JSON `PageResult[]` |
@@ -171,7 +171,7 @@ interface PageResult {
 
 interface CrawlParams {
   url: string
-  mode: 'simple' | 'auth' | 'interactive'
+  mode: 'simple' | 'advance'
   multiPage: boolean
   depth: number
   maxPages: number
