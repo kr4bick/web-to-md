@@ -30,6 +30,8 @@ function initDb(): Database.Database {
   try { db.exec('ALTER TABLE parse_jobs ADD COLUMN summary TEXT') } catch {}
   try { db.exec('ALTER TABLE parse_jobs ADD COLUMN page_count INTEGER DEFAULT 0') } catch {}
   try { db.exec('ALTER TABLE parse_jobs ADD COLUMN image_count INTEGER DEFAULT 0') } catch {}
+  try { db.exec('ALTER TABLE parse_jobs ADD COLUMN ai_prompt TEXT') } catch {}
+  try { db.exec('ALTER TABLE parse_jobs ADD COLUMN ai_provider TEXT') } catch {}
 
   return db
 }

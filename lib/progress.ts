@@ -20,6 +20,7 @@ export function initProgress(jobId: string): void {
     pagesCompleted: existing?.pagesCompleted ?? 0,
     pagesTotal: existing?.pagesTotal ?? 0,
     imagesCompleted: existing?.imagesCompleted ?? 0,
+    aiPagesCompleted: existing?.aiPagesCompleted ?? 0,
     startedAt: existing?.startedAt ?? Date.now(),
     updatedAt: Date.now(),
   })

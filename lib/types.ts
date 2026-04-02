@@ -22,12 +22,16 @@ export interface PageResult {
   filename: string        // e.g. "page-001.md"
   images: PageImage[]
   error?: string
+  summary?: string
+  aiStatus?: 'success' | 'error' | 'timeout' | 'skipped'
+  aiError?: string
 }
 
 // Sitemap tree node
 export interface SitemapNode {
   url: string
   title: string | null
+  summary?: string
   depth: number
   status: 'success' | 'error' | 'timeout' | 'skipped' | 'queued'
   filename: string | null
@@ -45,6 +49,7 @@ export interface CrawlProgress {
   pagesCompleted: number
   pagesTotal: number
   imagesCompleted: number
+  aiPagesCompleted: number
   startedAt: number
   updatedAt: number
 }
@@ -109,6 +114,11 @@ export interface CrawlParams extends ScrapeParams {
   maxPages: number
   concurrency: number
   sameDomain: 'hostname' | 'origin'
+  aiEnabled?: boolean
+  aiPrompt?: string
+  aiProvider?: 'gemini'
+  aiTimeoutMs?: number
+  aiConcurrency?: number
 }
 
 export interface CrawlResult {
