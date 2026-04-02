@@ -132,7 +132,7 @@ interface ProcessPageInput {
   sameDomain: 'hostname' | 'origin'
   aiEnabled?: boolean
   aiPrompt?: string
-  aiProvider?: 'gemini'
+  aiProvider?: 'gemini' | 'claude'
   aiTimeoutMs: number
   aiSemaphore: ReturnType<typeof createSemaphore>
 }
