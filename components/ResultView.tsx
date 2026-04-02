@@ -4,6 +4,14 @@ import type { PageResult, ParseJob } from '@/lib/types'
 import SitemapTree from './SitemapTree'
 
 export default function ResultView({ job }: { job: ParseJob }) {
+  if (job.status === 'error') {
+    return (
+      <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+        {job.error ?? 'Parse failed.'}
+      </div>
+    )
+  }
+
   const pages: PageResult[] = (() => {
     try {
       return job.pages ? JSON.parse(job.pages) : []

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { createJob, updateJob, getJob } from '@/lib/db'
 import { crawl } from '@/lib/crawler'
-import { initProgress, deleteProgress } from '@/lib/progress'
+import { initProgress, setProgress, deleteProgress } from '@/lib/progress'
 import type { CrawlParams } from '@/lib/types'
 
 const schema = z.object({
@@ -71,9 +71,12 @@ async function runCrawl(id: string, params: CrawlParams): Promise<void> {
       page_count: successPages.length,
       image_count: imageCount,
     })
+    setProgress(id, { phase: 'done' })
+    deleteProgress(id)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     updateJob(id, { status: 'error', error: message })
+    setProgress(id, { phase: 'done' })
     deleteProgress(id)
   }
 }

@@ -81,9 +81,6 @@ export async function crawl(params: CrawlParams, jobId: string): Promise<CrawlRe
     summary = `Parsed ${successPages.length} pages from ${domain} up to depth ${maxDepth}. Archive contains ${successPages.length} markdown files and ${imageCount} images.`
   }
 
-  setProgress(jobId, { phase: 'done' })
-  deleteProgress(jobId)
-
   return { pages: results, status, summary, title, finalUrl }
 }
 

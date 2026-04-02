@@ -92,12 +92,7 @@ export default function ParseForm() {
 
   return (
     <div className="space-y-6">
-      <div className="relative">
-        <form
-          onSubmit={handleSubmit}
-          aria-busy={isInterfaceLocked}
-          className={`space-y-4 transition-opacity ${isInterfaceLocked ? 'opacity-60' : ''}`}
-        >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <fieldset disabled={isInterfaceLocked} className="space-y-4">
             <div>
               <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -293,34 +288,6 @@ export default function ParseForm() {
             </button>
           </fieldset>
         </form>
-
-        {isInterfaceLocked && (
-          <div className="absolute inset-0 z-10 flex cursor-progress justify-center pt-2">
-            <div
-              aria-live="polite"
-              className="flex max-w-sm items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm"
-            >
-              <svg
-                className="animate-spin h-4 w-4 text-gray-500 shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-700">{loading ? 'Starting parse…' : 'Parsing in progress…'}</p>
-                <p className="text-xs text-gray-500">
-                  {loading
-                    ? 'Waiting for the parser service to accept the job.'
-                    : 'Form controls will unlock automatically when the current job completes.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
       {error && (
         <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
