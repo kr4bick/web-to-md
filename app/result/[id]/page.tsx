@@ -1,19 +1,6 @@
 import Link from 'next/link'
 import ResultView from '@/components/ResultView'
-
-interface ParseJob {
-  id: string
-  url: string
-  status: string
-  created_at: number
-  markdown: string | null
-  pages: string | null
-  summary: string | null
-  page_count: number
-  image_count: number
-  // legacy fields (may be present)
-  error?: string | null
-}
+import type { ParseJob } from '@/lib/types'
 
 async function getJob(id: string): Promise<ParseJob | null> {
   try {
