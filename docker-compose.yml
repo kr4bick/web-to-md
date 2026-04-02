@@ -1,0 +1,27 @@
+services:
+  playwright-service:
+    build: ./playwright-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  web-parser:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PLAYWRIGHT_SERVICE_URL: http://playwright-service:3001
+      ALLOWED_IPS: "127.0.0.1,::1"
+      SESSION_SECRET: "change-me-to-a-random-32-char-secret!!"
+    volumes:
+      - web-parser-data:/app/data
+    depends_on:
+      playwright-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  web-parser-data:
