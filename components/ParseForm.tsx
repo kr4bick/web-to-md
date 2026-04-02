@@ -21,6 +21,13 @@ export default function ParseForm() {
   const [concurrency, setConcurrency] = useState(3)
   const [sameDomain, setSameDomain] = useState<SameDomainMode>('hostname')
 
+  const [aiEnabled, setAiEnabled] = useState(false)
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [aiProvider] = useState<'gemini'>('gemini')
+  const [aiTimeoutSecs, setAiTimeoutSecs] = useState(60)
+  const [aiConcurrency, setAiConcurrency] = useState(2)
+  const [aiPromptError, setAiPromptError] = useState<string | null>(null)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
@@ -43,6 +50,13 @@ export default function ParseForm() {
     e.preventDefault()
     if (isInterfaceLocked) return
 
+    // Client-side AI prompt validation
+    if (isAdvancedMode && aiEnabled && !aiPrompt.trim()) {
+      setAiPromptError('Prompt is required when AI post-processing is enabled.')
+      return
+    }
+    setAiPromptError(null)
+
     setLoading(true)
     setError(null)
     setResult(null)
@@ -60,6 +74,14 @@ export default function ParseForm() {
         body.maxPages = maxPages
         body.concurrency = concurrency
         body.sameDomain = sameDomain
+      }
+
+      if (aiEnabled) {
+        body.aiEnabled = true
+        body.aiPrompt = aiPrompt
+        body.aiProvider = aiProvider
+        body.aiTimeoutSecs = aiTimeoutSecs
+        body.aiConcurrency = aiConcurrency
       }
     }
 
@@ -145,6 +167,7 @@ export default function ParseForm() {
 
               {showAdvanced && (
                 <div className="mt-4 space-y-4 pl-4 border-l border-gray-200">
+                  {/* Multi-page crawl */}
                   <div className="flex items-center gap-2">
                     <input
                       id="multiPage"
@@ -262,6 +285,95 @@ export default function ParseForm() {
                       placeholder="#main-content"
                       className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
                     />
+                  </div>
+
+                  {/* AI post-processing */}
+                  <div className="pt-2 border-t border-gray-100 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="aiEnabled"
+                        type="checkbox"
+                        checked={aiEnabled}
+                        onChange={(e) => {
+                          setAiEnabled(e.target.checked)
+                          if (!e.target.checked) setAiPromptError(null)
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                      />
+                      <label htmlFor="aiEnabled" className="text-sm font-medium text-gray-700">
+                        Use AI post-processing
+                      </label>
+                    </div>
+
+                    {aiEnabled && (
+                      <div className="ml-6 space-y-4 border-l border-gray-200 pl-4">
+                        <div>
+                          <label htmlFor="aiPrompt" className="block text-sm font-medium text-gray-700 mb-1.5">
+                            AI prompt
+                          </label>
+                          <textarea
+                            id="aiPrompt"
+                            value={aiPrompt}
+                            onChange={(e) => {
+                              setAiPrompt(e.target.value)
+                              if (e.target.value.trim()) setAiPromptError(null)
+                            }}
+                            placeholder="Clean this markdown and keep only the main content."
+                            rows={3}
+                            className={`border rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full ${aiPromptError ? 'border-red-400' : 'border-gray-300'}`}
+                          />
+                          {aiPromptError && (
+                            <p className="mt-1 text-xs text-red-500">{aiPromptError}</p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                          <div>
+                            <label htmlFor="aiProvider" className="block text-sm font-medium text-gray-700 mb-1.5">
+                              AI provider
+                            </label>
+                            <select
+                              id="aiProvider"
+                              value={aiProvider}
+                              disabled
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white disabled:opacity-60"
+                            >
+                              <option value="gemini">Gemini</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label htmlFor="aiTimeoutSecs" className="block text-sm font-medium text-gray-700 mb-1.5">
+                              Timeout (sec)
+                            </label>
+                            <input
+                              id="aiTimeoutSecs"
+                              type="number"
+                              min={10}
+                              max={300}
+                              value={aiTimeoutSecs}
+                              onChange={(e) => setAiTimeoutSecs(Number(e.target.value))}
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="aiConcurrency" className="block text-sm font-medium text-gray-700 mb-1.5">
+                              Max parallel
+                            </label>
+                            <input
+                              id="aiConcurrency"
+                              type="number"
+                              min={1}
+                              max={5}
+                              value={aiConcurrency}
+                              onChange={(e) => setAiConcurrency(Number(e.target.value))}
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

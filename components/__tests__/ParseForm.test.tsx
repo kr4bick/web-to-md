@@ -141,4 +141,75 @@ describe('ParseForm', () => {
     expect(screen.getByLabelText(/max pages/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/concurrency/i)).toBeInTheDocument()
   })
+
+  it('AI post-processing checkbox is hidden in simple mode', () => {
+    render(<ParseForm />)
+    expect(screen.queryByLabelText(/use ai post-processing/i)).not.toBeInTheDocument()
+  })
+
+  it('AI post-processing checkbox visible in Advance mode', async () => {
+    const user = userEvent.setup()
+    render(<ParseForm />)
+
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'advance')
+    expect(screen.getByLabelText(/use ai post-processing/i)).toBeInTheDocument()
+  })
+
+  it('AI sub-fields hidden when aiEnabled is unchecked', async () => {
+    const user = userEvent.setup()
+    render(<ParseForm />)
+
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'advance')
+    expect(screen.queryByLabelText(/ai prompt/i)).not.toBeInTheDocument()
+  })
+
+  it('AI sub-fields visible when aiEnabled is checked', async () => {
+    const user = userEvent.setup()
+    render(<ParseForm />)
+
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'advance')
+    await user.click(screen.getByLabelText(/use ai post-processing/i))
+
+    expect(screen.getByLabelText(/ai prompt/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/timeout/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/max parallel/i)).toBeInTheDocument()
+  })
+
+  it('shows prompt validation error when AI enabled but prompt is empty on submit', async () => {
+    const user = userEvent.setup()
+    render(<ParseForm />)
+
+    await user.type(screen.getByLabelText(/url/i), 'https://example.com')
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'advance')
+    await user.click(screen.getByLabelText(/use ai post-processing/i))
+    // Leave prompt empty
+    await user.click(screen.getByRole('button', { name: /^parse$/i }))
+
+    expect(screen.getByText(/prompt is required/i)).toBeInTheDocument()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('includes aiEnabled and aiPrompt in POST body when AI is enabled', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetch).mockResolvedValueOnce({
+      status: 202,
+      ok: true,
+      json: async () => ({ jobId: 'ai-job-1', status: 'running' }),
+    } as Response)
+
+    render(<ParseForm />)
+
+    await user.type(screen.getByLabelText(/url/i), 'https://example.com')
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'advance')
+    await user.click(screen.getByLabelText(/use ai post-processing/i))
+    await user.type(screen.getByLabelText(/ai prompt/i), 'Clean this page')
+    await user.click(screen.getByRole('button', { name: /^parse$/i }))
+
+    await waitFor(() => {
+      const call = vi.mocked(fetch).mock.calls[0]
+      const body = JSON.parse(call[1]?.body as string)
+      expect(body.aiEnabled).toBe(true)
+      expect(body.aiPrompt).toBe('Clean this page')
+    })
+  })
 })
