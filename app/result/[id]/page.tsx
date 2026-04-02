@@ -4,14 +4,15 @@ import ResultView from '@/components/ResultView'
 interface ParseJob {
   id: string
   url: string
-  final_url: string | null
-  title: string | null
-  status: 'pending' | 'success' | 'error'
-  mode: 'simple' | 'auth' | 'interactive'
-  markdown: string | null
-  error: string | null
-  images: string | null
+  status: string
   created_at: number
+  markdown: string | null
+  pages: string | null
+  summary: string | null
+  page_count: number
+  image_count: number
+  // legacy fields (may be present)
+  error?: string | null
 }
 
 async function getJob(id: string): Promise<ParseJob | null> {

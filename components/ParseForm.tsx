@@ -1,21 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import ProgressView from './ProgressView'
 import ResultView from './ResultView'
 
 type ParseMode = 'simple' | 'auth' | 'interactive'
+type SameDomainMode = 'same hostname' | 'same origin'
+
+interface PageResult {
+  url: string
+  title?: string
+  depth: number
+  status: 'parsed' | 'failed' | 'timeout' | 'skipped'
+  filename?: string
+  imageCount: number
+  parentUrl?: string
+}
 
 interface ParseJob {
   id: string
   url: string
-  final_url: string | null
-  title: string | null
-  status: 'pending' | 'success' | 'error'
-  mode: ParseMode
-  markdown: string | null
-  error: string | null
-  images: string | null
+  status: string
   created_at: number
+  markdown: string | null
+  pages: string | null
+  summary: string | null
+  page_count: number
+  image_count: number
 }
 
 export default function ParseForm() {
@@ -25,20 +36,46 @@ export default function ParseForm() {
   const [storageState, setStorageState] = useState('')
   const [waitSelector, setWaitSelector] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
+
+  // Multi-page crawl options
+  const [multiPage, setMultiPage] = useState(false)
+  const [parseLinked, setParseLinked] = useState(false)
+  const [depth, setDepth] = useState(1)
+  const [maxPages, setMaxPages] = useState(10)
+  const [concurrency, setConcurrency] = useState(3)
+  const [sameDomain, setSameDomain] = useState<SameDomainMode>('same hostname')
+
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<ParseJob | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
+  const [result, setResult] = useState<ParseJob | null>(null)
+
+  const handleComplete = useCallback((job: ParseJob) => {
+    setJobId(null)
+    setResult(job)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
     setResult(null)
+    setJobId(null)
 
-    const body: Record<string, string> = { url, mode }
+    const body: Record<string, unknown> = { url, mode }
     if (cookies) body.cookies = cookies
     if (storageState) body.storageState = storageState
     if (waitSelector) body.waitSelector = waitSelector
+
+    if (multiPage) {
+      body.multiPage = true
+      if (parseLinked) {
+        body.depth = depth
+        body.maxPages = maxPages
+        body.concurrency = concurrency
+        body.sameDomain = sameDomain
+      }
+    }
 
     try {
       const res = await fetch('/api/parse', {
@@ -46,6 +83,13 @@ export default function ParseForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+
+      if (res.status === 202) {
+        const data = await res.json()
+        setJobId(data.jobId)
+        setLoading(false)
+        return
+      }
 
       const data = await res.json()
 
@@ -98,6 +142,103 @@ export default function ParseForm() {
           </select>
         </div>
 
+        {/* Multi-page toggle */}
+        <div className="flex items-center gap-2">
+          <input
+            id="multiPage"
+            type="checkbox"
+            checked={multiPage}
+            onChange={(e) => setMultiPage(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+          />
+          <label htmlFor="multiPage" className="text-sm font-medium text-gray-700">
+            Multi-page crawl
+          </label>
+        </div>
+
+        {/* Multi-page sub-options */}
+        {multiPage && (
+          <div className="ml-6 space-y-4 border-l border-gray-200 pl-4">
+            <div className="flex items-center gap-2">
+              <input
+                id="parseLinked"
+                type="checkbox"
+                checked={parseLinked}
+                onChange={(e) => setParseLinked(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+              />
+              <label htmlFor="parseLinked" className="text-sm font-medium text-gray-700">
+                Parse linked pages
+              </label>
+            </div>
+
+            {parseLinked && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label htmlFor="depth" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Depth
+                    </label>
+                    <input
+                      id="depth"
+                      type="number"
+                      min={1}
+                      max={5}
+                      value={depth}
+                      onChange={(e) => setDepth(Number(e.target.value))}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="maxPages" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Max pages
+                    </label>
+                    <input
+                      id="maxPages"
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={maxPages}
+                      onChange={(e) => setMaxPages(Number(e.target.value))}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="concurrency" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Concurrency
+                    </label>
+                    <input
+                      id="concurrency"
+                      type="number"
+                      min={1}
+                      max={5}
+                      value={concurrency}
+                      onChange={(e) => setConcurrency(Number(e.target.value))}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="sameDomain" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Same domain mode
+                  </label>
+                  <select
+                    id="sameDomain"
+                    value={sameDomain}
+                    onChange={(e) => setSameDomain(e.target.value as SameDomainMode)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
+                  >
+                    <option value="same hostname">same hostname</option>
+                    <option value="same origin">same origin</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Advanced options */}
         <div>
           <button
             type="button"
@@ -157,7 +298,7 @@ export default function ParseForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || jobId !== null}
           className="bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Parse
@@ -170,7 +311,7 @@ export default function ParseForm() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <span className="text-sm">Parsing — this may take up to 60 seconds</span>
+          <span className="text-sm">Connecting…</span>
         </div>
       )}
 
@@ -179,6 +320,8 @@ export default function ParseForm() {
           {error}
         </div>
       )}
+
+      {jobId && <ProgressView jobId={jobId} onComplete={handleComplete} />}
 
       {result && <ResultView job={result} />}
     </div>

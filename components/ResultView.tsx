@@ -1,96 +1,96 @@
 'use client'
 
-import { useState } from 'react'
-import MarkdownPreview from './MarkdownPreview'
+import SitemapTree from './SitemapTree'
+
+interface PageResult {
+  url: string
+  title?: string
+  depth: number
+  status: 'parsed' | 'failed' | 'timeout' | 'skipped'
+  filename?: string
+  imageCount: number
+  parentUrl?: string
+}
 
 interface ParseJob {
   id: string
   url: string
-  final_url: string | null
-  title: string | null
-  status: 'pending' | 'success' | 'error'
-  mode: 'simple' | 'auth' | 'interactive'
-  markdown: string | null
-  error: string | null
-  images: string | null
+  status: string
   created_at: number
+  markdown: string | null
+  pages: string | null
+  summary: string | null
+  page_count: number
+  image_count: number
 }
 
 export default function ResultView({ job }: { job: ParseJob }) {
-  const [activeTab, setActiveTab] = useState<'preview' | 'raw'>('preview')
-  const displayUrl = job.final_url ?? job.url
-
-  const hasImages = (() => {
+  const pages: PageResult[] = (() => {
     try {
-      const imgs = job.images ? JSON.parse(job.images) : []
-      return imgs.some((i: { skipped: boolean }) => !i.skipped)
-    } catch { return false }
+      return job.pages ? JSON.parse(job.pages) : []
+    } catch {
+      return []
+    }
   })()
+
+  const parsedCount = pages.filter((p) => p.status === 'parsed').length
+  const mdCount = parsedCount || job.page_count || 0
+  const imgCount = job.image_count || 0
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-1">{job.title ?? 'Untitled'}</h2>
-        <a
-          href={displayUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-gray-500 hover:text-gray-900 transition-colors break-all"
-        >
-          {displayUrl}
-        </a>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={`px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'preview'
-                ? 'text-gray-900 border-b-2 border-gray-900 -mb-px'
-                : 'text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            Preview
-          </button>
-          <button
-            onClick={() => setActiveTab('raw')}
-            className={`px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'raw'
-                ? 'text-gray-900 border-b-2 border-gray-900 -mb-px'
-                : 'text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            Raw Markdown
-          </button>
-        </div>
-
-        <div className="p-5">
-          {activeTab === 'preview' ? (
-            <MarkdownPreview markdown={job.markdown ?? ''} />
-          ) : (
-            <pre className="overflow-auto text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono leading-relaxed">{job.markdown}</pre>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <a
-          href={`/api/download/${job.id}`}
-          download
-          className="bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors"
-        >
-          Download .md
-        </a>
-        {hasImages && (
+      {/* Summary */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+        <div>
           <a
-            href={`/api/download/${job.id}/zip`}
-            download
-            className="bg-white text-gray-700 text-sm font-medium rounded-lg px-4 py-2 border border-gray-300 hover:bg-gray-50 transition-colors"
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors break-all"
           >
-            Download .zip
+            {job.url}
           </a>
+        </div>
+        {job.summary && (
+          <p className="text-sm text-gray-700 leading-relaxed">{job.summary}</p>
         )}
+        <div className="flex gap-4 text-sm text-gray-500">
+          <span>
+            <span className="font-medium text-gray-900">{mdCount}</span> pages parsed
+          </span>
+          <span>
+            <span className="font-medium text-gray-900">{imgCount}</span> images downloaded
+          </span>
+        </div>
+      </div>
+
+      {/* Sitemap tree */}
+      {pages.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
+          <SitemapTree pages={pages} />
+        </div>
+      )}
+
+      {/* Archive info + Download */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-center justify-between gap-4">
+        <p className="text-sm text-gray-500">
+          Archive contains{' '}
+          <span className="text-gray-900 font-medium">{mdCount} markdown file{mdCount !== 1 ? 's' : ''}</span>
+          {imgCount > 0 && (
+            <>
+              {' '}and{' '}
+              <span className="text-gray-900 font-medium">{imgCount} image{imgCount !== 1 ? 's' : ''}</span>
+            </>
+          )}
+        </p>
+        <a
+          href={`/api/download/${job.id}/zip`}
+          download
+          className="shrink-0 bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors"
+        >
+          Download ZIP
+        </a>
       </div>
     </div>
   )

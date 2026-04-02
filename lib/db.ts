@@ -26,6 +26,11 @@ function initDb(): Database.Database {
     // column already exists, ignore
   }
 
+  try { db.exec('ALTER TABLE parse_jobs ADD COLUMN pages TEXT') } catch {}
+  try { db.exec('ALTER TABLE parse_jobs ADD COLUMN summary TEXT') } catch {}
+  try { db.exec('ALTER TABLE parse_jobs ADD COLUMN page_count INTEGER DEFAULT 0') } catch {}
+  try { db.exec('ALTER TABLE parse_jobs ADD COLUMN image_count INTEGER DEFAULT 0') } catch {}
+
   return db
 }
 
@@ -60,7 +65,7 @@ export function getJob(id: string): ParseJob | undefined {
 export function listJobs(): ParseJobSummary[] {
   const db = getDb()
   return db.prepare(`
-    SELECT id, url, final_url, title, status, mode, error, created_at
+    SELECT id, url, final_url, title, status, mode, error, summary, page_count, image_count, created_at
     FROM parse_jobs
     ORDER BY created_at DESC
   `).all() as ParseJobSummary[]
