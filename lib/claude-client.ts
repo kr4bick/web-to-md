@@ -79,8 +79,11 @@ export async function processWithClaude(
   const data = await res.json()
   const rawText: string = data?.content?.[0]?.text ?? ''
 
+  // Claude sometimes wraps JSON in a markdown code fence — strip it
+  const jsonText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+
   try {
-    const parsed = JSON.parse(rawText) as Partial<ClaudeResult>
+    const parsed = JSON.parse(jsonText) as Partial<ClaudeResult>
     return {
       processedMarkdown: parsed.processedMarkdown ?? rawMarkdown,
       summary: parsed.summary ?? '',
