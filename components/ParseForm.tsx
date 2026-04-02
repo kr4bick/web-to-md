@@ -14,6 +14,7 @@ interface ParseJob {
   mode: ParseMode
   markdown: string | null
   error: string | null
+  images: string | null
   created_at: number
 }
 
@@ -67,7 +68,7 @@ export default function ParseForm() {
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="url" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1.5">
             URL
           </label>
           <input
@@ -77,19 +78,19 @@ export default function ParseForm() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://example.com"
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full"
           />
         </div>
 
         <div>
-          <label htmlFor="mode" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="mode" className="block text-sm font-medium text-gray-700 mb-1.5">
             Mode
           </label>
           <select
             id="mode"
             value={mode}
             onChange={(e) => setMode(e.target.value as ParseMode)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100 focus:outline-none focus:border-blue-500"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
           >
             <option value="simple">Simple</option>
             <option value="auth">Auth</option>
@@ -101,15 +102,16 @@ export default function ParseForm() {
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
           >
-            {showAdvanced ? '▾' : '▸'} Advanced options
+            <span>{showAdvanced ? '▾' : '▸'}</span>
+            <span>Advanced options</span>
           </button>
 
           {showAdvanced && (
-            <div className="mt-3 space-y-3 pl-4 border-l border-gray-700">
+            <div className="mt-4 space-y-4 pl-4 border-l border-gray-200">
               <div>
-                <label htmlFor="cookies" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="cookies" className="block text-sm font-medium text-gray-700 mb-1.5">
                   Cookies
                 </label>
                 <textarea
@@ -118,12 +120,12 @@ export default function ParseForm() {
                   onChange={(e) => setCookies(e.target.value)}
                   placeholder="session=abc; token=xyz"
                   rows={2}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm font-mono"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
                 />
               </div>
 
               <div>
-                <label htmlFor="storageState" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="storageState" className="block text-sm font-medium text-gray-700 mb-1.5">
                   Storage State (JSON)
                 </label>
                 <textarea
@@ -132,12 +134,12 @@ export default function ParseForm() {
                   onChange={(e) => setStorageState(e.target.value)}
                   placeholder={'{"cookies":[],"origins":[]}'}
                   rows={3}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm font-mono"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
                 />
               </div>
 
               <div>
-                <label htmlFor="waitSelector" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="waitSelector" className="block text-sm font-medium text-gray-700 mb-1.5">
                   Wait Selector
                 </label>
                 <input
@@ -146,7 +148,7 @@ export default function ParseForm() {
                   value={waitSelector}
                   onChange={(e) => setWaitSelector(e.target.value)}
                   placeholder="#main-content"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm font-mono"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full font-mono"
                 />
               </div>
             </div>
@@ -156,24 +158,24 @@ export default function ParseForm() {
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+          className="bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Parse
         </button>
       </form>
 
       {loading && (
-        <div className="flex items-center gap-3 text-gray-300">
-          <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <div className="flex items-center gap-3 text-gray-500">
+          <svg className="animate-spin h-4 w-4 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <span>Parsing… this may take up to 60 seconds</span>
+          <span className="text-sm">Parsing — this may take up to 60 seconds</span>
         </div>
       )}
 
       {error && (
-        <div className="px-4 py-3 bg-red-900/50 border border-red-700 rounded text-red-300 text-sm">
+        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
           {error}
         </div>
       )}

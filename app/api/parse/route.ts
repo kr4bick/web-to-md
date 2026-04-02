@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { createJob, updateJob, getJob } from '@/lib/db'
 import { scrape } from '@/lib/scraper'
 import { convertToMarkdown } from '@/lib/converter'
+import { downloadImages } from '@/lib/images'
+import type { JobImage } from '@/lib/types'
 
 const schema = z.object({
   url: z.string().url(),
@@ -53,13 +55,25 @@ export async function POST(request: Request) {
       timeoutPromise,
     ])
 
-    const markdown = convertToMarkdown(scrapeResult.html, scrapeResult.finalUrl)
+    // Download images in parallel (errors don't fail the job)
+    let urlToLocal = new Map<string, string>()
+    let jobImages: JobImage[] = []
+    try {
+      const imgResult = await downloadImages(scrapeResult.html, id, scrapeResult.finalUrl)
+      urlToLocal = imgResult.urlToLocal
+      jobImages = imgResult.images
+    } catch {
+      // image download failure doesn't fail the job
+    }
+
+    const markdown = convertToMarkdown(scrapeResult.html, scrapeResult.finalUrl, urlToLocal)
 
     updateJob(id, {
       status: 'success',
       final_url: scrapeResult.finalUrl,
       title: scrapeResult.title,
       markdown,
+      images: JSON.stringify(jobImages),
     })
 
     const job = getJob(id)

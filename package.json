@@ -12,7 +12,9 @@
     "@mozilla/readability": "^0.6.0",
     "@playwright/browser-chromium": "^1.59.1",
     "@tailwindcss/typography": "^0.5.19",
+    "archiver": "^7.0.1",
     "better-sqlite3": "^12.8.0",
+    "iron-session": "^8.0.4",
     "jsdom": "^29.0.1",
     "next": "16.2.2",
     "playwright": "^1.59.1",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/archiver": "^7.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^20.19.37",

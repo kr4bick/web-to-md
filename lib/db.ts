@@ -20,6 +20,12 @@ function initDb(): Database.Database {
     )
   `)
 
+  try {
+    db.exec('ALTER TABLE parse_jobs ADD COLUMN images TEXT')
+  } catch {
+    // column already exists, ignore
+  }
+
   return db
 }
 

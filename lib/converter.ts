@@ -2,7 +2,7 @@ import { JSDOM } from 'jsdom'
 import { Readability } from '@mozilla/readability'
 import TurndownService from 'turndown'
 
-export function convertToMarkdown(html: string, baseUrl: string): string {
+export function convertToMarkdown(html: string, baseUrl: string, urlToLocal?: Map<string, string>): string {
   const dom = new JSDOM(html, { url: baseUrl })
 
   const reader = new Readability(dom.window.document)
@@ -15,5 +15,14 @@ export function convertToMarkdown(html: string, baseUrl: string): string {
     bulletListMarker: '-',
   })
 
-  return td.turndown(contentHtml)
+  let markdown = td.turndown(contentHtml)
+
+  if (urlToLocal && urlToLocal.size > 0) {
+    markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+      const local = urlToLocal.get(src)
+      return local ? `![${alt}](${local})` : match
+    })
+  }
+
+  return markdown
 }

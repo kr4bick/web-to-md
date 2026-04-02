@@ -10,6 +10,7 @@ interface ParseJob {
   mode: 'simple' | 'auth' | 'interactive'
   markdown: string | null
   error: string | null
+  images: string | null
   created_at: number
 }
 
@@ -33,14 +34,16 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
 
   if (!job) {
     return (
-      <main className="min-h-screen bg-gray-950 text-gray-100 p-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <Link href="/history" className="text-gray-400 hover:text-white">
+      <main className="min-h-screen bg-white">
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <div className="mb-8">
+            <Link href="/history" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
               ← History
             </Link>
           </div>
-          <p className="text-red-400">Job not found.</p>
+          <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+            Job not found.
+          </div>
         </div>
       </main>
     )
@@ -48,15 +51,15 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
 
   if (job.status === 'error') {
     return (
-      <main className="min-h-screen bg-gray-950 text-gray-100 p-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <Link href="/history" className="text-gray-400 hover:text-white">
+      <main className="min-h-screen bg-white">
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <div className="mb-8">
+            <Link href="/history" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
               ← History
             </Link>
-            <h1 className="text-3xl font-bold">Result</h1>
           </div>
-          <div className="px-4 py-3 bg-red-900/50 border border-red-700 rounded text-red-300">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-6">Result</h1>
+          <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
             {job.error ?? 'Parse failed.'}
           </div>
         </div>
@@ -65,14 +68,14 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-gray-100 p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/history" className="text-gray-400 hover:text-white">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-6 py-12">
+        <div className="mb-8">
+          <Link href="/history" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
             ← History
           </Link>
-          <h1 className="text-3xl font-bold">Result</h1>
         </div>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Result</h1>
         <ResultView job={job} />
       </div>
     </main>

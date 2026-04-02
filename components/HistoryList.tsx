@@ -29,61 +29,63 @@ function truncate(str: string, max: number): string {
 }
 
 const statusStyles: Record<ParseStatus, string> = {
-  success: 'bg-green-900/50 text-green-300 border border-green-700',
-  error: 'bg-red-900/50 text-red-300 border border-red-700',
-  pending: 'bg-gray-700/50 text-gray-300 border border-gray-600',
+  success: 'bg-green-100 text-green-700',
+  error: 'bg-red-100 text-red-600',
+  pending: 'bg-gray-100 text-gray-500',
 }
 
 export default function HistoryList({ jobs }: { jobs: ParseJobSummary[] }) {
   if (jobs.length === 0) {
-    return <p className="text-gray-400">No history yet.</p>
+    return <p className="text-sm text-gray-500">No history yet.</p>
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left">
-        <thead>
-          <tr className="text-gray-400 border-b border-gray-700">
-            <th className="pb-3 pr-4 font-medium">URL</th>
-            <th className="pb-3 pr-4 font-medium">Domain</th>
-            <th className="pb-3 pr-4 font-medium">Mode</th>
-            <th className="pb-3 pr-4 font-medium">Status</th>
-            <th className="pb-3 pr-4 font-medium">Date</th>
-            <th className="pb-3 font-medium"></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-800">
-          {jobs.map((job) => (
-            <tr key={job.id} className="text-gray-300">
-              <td className="py-3 pr-4 max-w-xs">
-                <span title={job.title ?? job.url}>{truncate(job.url, 60)}</span>
-              </td>
-              <td className="py-3 pr-4 text-gray-400">{getDomain(job.url)}</td>
-              <td className="py-3 pr-4">
-                <span className="px-2 py-0.5 rounded text-xs bg-gray-700 text-gray-200">
-                  {job.mode}
-                </span>
-              </td>
-              <td className="py-3 pr-4">
-                <span className={`px-2 py-0.5 rounded text-xs ${statusStyles[job.status]}`}>
-                  {job.status}
-                </span>
-              </td>
-              <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">
-                {new Date(job.created_at).toLocaleString()}
-              </td>
-              <td className="py-3">
-                <Link
-                  href={`/result/${job.id}`}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded text-xs transition-colors"
-                >
-                  Open
-                </Link>
-              </td>
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">URL</th>
+              <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Domain</th>
+              <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Mode</th>
+              <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Status</th>
+              <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Date</th>
+              <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {jobs.map((job) => (
+              <tr key={job.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3 max-w-xs">
+                  <span className="text-gray-900" title={job.title ?? job.url}>{truncate(job.url, 60)}</span>
+                </td>
+                <td className="px-4 py-3 text-gray-500">{getDomain(job.url)}</td>
+                <td className="px-4 py-3">
+                  <span className="px-2 py-0.5 rounded-md text-xs bg-gray-100 text-gray-600">
+                    {job.mode}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-0.5 rounded-md text-xs ${statusStyles[job.status]}`}>
+                    {job.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                  {new Date(job.created_at).toLocaleString()}
+                </td>
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/result/${job.id}`}
+                    className="bg-white text-gray-700 text-sm font-medium rounded-lg px-3 py-1.5 border border-gray-300 hover:bg-gray-50 transition-colors"
+                  >
+                    Open
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
