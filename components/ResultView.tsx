@@ -1,28 +1,7 @@
 'use client'
 
+import type { PageResult, ParseJob } from '@/lib/types'
 import SitemapTree from './SitemapTree'
-
-interface PageResult {
-  url: string
-  title?: string
-  depth: number
-  status: 'parsed' | 'failed' | 'timeout' | 'skipped'
-  filename?: string
-  imageCount: number
-  parentUrl?: string
-}
-
-interface ParseJob {
-  id: string
-  url: string
-  status: string
-  created_at: number
-  markdown: string | null
-  pages: string | null
-  summary: string | null
-  page_count: number
-  image_count: number
-}
 
 export default function ResultView({ job }: { job: ParseJob }) {
   const pages: PageResult[] = (() => {
@@ -33,7 +12,7 @@ export default function ResultView({ job }: { job: ParseJob }) {
     }
   })()
 
-  const parsedCount = pages.filter((p) => p.status === 'parsed').length
+  const parsedCount = pages.filter((p) => p.status === 'success').length
   const mdCount = parsedCount || job.page_count || 0
   const imgCount = job.image_count || 0
 

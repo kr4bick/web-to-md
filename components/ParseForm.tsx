@@ -1,33 +1,11 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import type { ParseJob, ParseMode } from '@/lib/types'
 import ProgressView from './ProgressView'
 import ResultView from './ResultView'
 
-type ParseMode = 'simple' | 'auth' | 'interactive'
-type SameDomainMode = 'same hostname' | 'same origin'
-
-interface PageResult {
-  url: string
-  title?: string
-  depth: number
-  status: 'parsed' | 'failed' | 'timeout' | 'skipped'
-  filename?: string
-  imageCount: number
-  parentUrl?: string
-}
-
-interface ParseJob {
-  id: string
-  url: string
-  status: string
-  created_at: number
-  markdown: string | null
-  pages: string | null
-  summary: string | null
-  page_count: number
-  image_count: number
-}
+type SameDomainMode = 'hostname' | 'origin'
 
 export default function ParseForm() {
   const [url, setUrl] = useState('')
@@ -43,7 +21,7 @@ export default function ParseForm() {
   const [depth, setDepth] = useState(1)
   const [maxPages, setMaxPages] = useState(10)
   const [concurrency, setConcurrency] = useState(3)
-  const [sameDomain, setSameDomain] = useState<SameDomainMode>('same hostname')
+  const [sameDomain, setSameDomain] = useState<SameDomainMode>('hostname')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -229,8 +207,8 @@ export default function ParseForm() {
                     onChange={(e) => setSameDomain(e.target.value as SameDomainMode)}
                     className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
                   >
-                    <option value="same hostname">same hostname</option>
-                    <option value="same origin">same origin</option>
+                    <option value="hostname">same hostname</option>
+                    <option value="origin">same origin</option>
                   </select>
                 </div>
               </div>

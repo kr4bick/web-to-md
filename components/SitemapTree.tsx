@@ -1,14 +1,6 @@
 'use client'
 
-interface PageResult {
-  url: string
-  title?: string
-  depth: number
-  status: 'parsed' | 'failed' | 'timeout' | 'skipped'
-  filename?: string
-  imageCount: number
-  parentUrl?: string
-}
+import type { PageResult } from '@/lib/types'
 
 interface TreeNode {
   page: PageResult
@@ -51,15 +43,15 @@ function truncate(str: string, max: number): string {
 }
 
 const statusIcon: Record<PageResult['status'], string> = {
-  parsed: '✓',
-  failed: '✗',
+  success: '✓',
+  error: '✗',
   timeout: '⏱',
   skipped: '—',
 }
 
 const statusColor: Record<PageResult['status'], string> = {
-  parsed: 'text-green-600',
-  failed: 'text-red-500',
+  success: 'text-green-600',
+  error: 'text-red-500',
   timeout: 'text-yellow-500',
   skipped: 'text-gray-400',
 }
@@ -67,6 +59,7 @@ const statusColor: Record<PageResult['status'], string> = {
 function TreeNodeRow({ node, isLast, prefix }: { node: TreeNode; isLast: boolean; prefix: string }) {
   const { page, children } = node
   const label = page.title ? truncate(page.title, 60) : truncate(urlPath(page.url), 60)
+  const imageCount = page.images.filter((image) => !image.skipped).length
   const connector = isLast ? '└─' : '├─'
 
   return (
@@ -87,8 +80,8 @@ function TreeNodeRow({ node, isLast, prefix }: { node: TreeNode; isLast: boolean
         >
           {label}
         </a>
-        {page.imageCount > 0 && (
-          <span className="text-xs text-gray-400 shrink-0">{page.imageCount} img</span>
+        {imageCount > 0 && (
+          <span className="text-xs text-gray-400 shrink-0">{imageCount} img</span>
         )}
       </div>
       {children.length > 0 && (

@@ -3,16 +3,18 @@ import type { CrawlProgress } from './types'
 const store = new Map<string, CrawlProgress>()
 
 export function initProgress(jobId: string): void {
+  const existing = store.get(jobId)
+
   store.set(jobId, {
     jobId,
     phase: 'discovering',
     currentUrl: null,
     currentStep: null,
     currentAsset: null,
-    pagesCompleted: 0,
-    pagesTotal: 0,
-    imagesCompleted: 0,
-    startedAt: Date.now(),
+    pagesCompleted: existing?.pagesCompleted ?? 0,
+    pagesTotal: existing?.pagesTotal ?? 0,
+    imagesCompleted: existing?.imagesCompleted ?? 0,
+    startedAt: existing?.startedAt ?? Date.now(),
     updatedAt: Date.now(),
   })
 }

@@ -4,7 +4,7 @@ import { scrape } from './scraper'
 import { convertToMarkdown } from './converter'
 import { downloadImagesForPage } from './images'
 import { extractLinks } from './links'
-import { initProgress, setProgress, deleteProgress } from './progress'
+import { initProgress, setProgress, deleteProgress, getProgress } from './progress'
 import type { CrawlParams, CrawlResult, PageResult, PageImage } from './types'
 
 const PAGE_TIMEOUT_MS = 30_000
@@ -158,8 +158,9 @@ async function processPage(input: ProcessPageInput): Promise<{
     )
     images = result.images
     urlToLocal = result.urlToLocal
+    const imagesCompleted = getProgress(jobId)?.imagesCompleted ?? 0
     setProgress(jobId, {
-      imagesCompleted: (await getImagesCompleted(jobId)) + images.filter(i => !i.skipped).length,
+      imagesCompleted: imagesCompleted + images.filter(i => !i.skipped).length,
     })
   } catch { /* image failure doesn't fail the page */ }
 
@@ -187,12 +188,6 @@ async function processPage(input: ProcessPageInput): Promise<{
     },
     discoveredLinks,
   }
-}
-
-// Helper to get current imagesCompleted from progress store without importing getProgress
-// (avoids circular dep risk — just reads current value)
-async function getImagesCompleted(_jobId: string): Promise<number> {
-  return 0 // progress store accumulates separately; caller adds delta
 }
 
 function normalizeUrl(url: string): string {
