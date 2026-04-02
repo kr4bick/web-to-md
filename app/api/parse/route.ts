@@ -15,6 +15,11 @@ const schema = z.object({
   maxPages: z.number().int().min(1).max(50).default(10),
   concurrency: z.number().int().min(1).max(5).default(3),
   sameDomain: z.enum(['hostname', 'origin']).default('hostname'),
+  aiEnabled: z.boolean().default(false),
+  aiPrompt: z.string().max(2000).optional(),
+  aiProvider: z.enum(['gemini']).default('gemini'),
+  aiTimeoutSecs: z.number().int().min(10).max(300).default(60),
+  aiConcurrency: z.number().int().min(1).max(5).default(2),
 })
 
 function normalizeParseMode(mode: z.infer<typeof schema>['mode']): ParseMode {
@@ -32,7 +37,8 @@ export async function POST(request: Request) {
     return Response.json({ error }, { status: 400 })
   }
 
-  const { url, mode: requestedMode, cookies, storageState, waitSelector, multiPage, depth, maxPages, concurrency, sameDomain } = parsed.data
+  const { url, mode: requestedMode, cookies, storageState, waitSelector, multiPage, depth, maxPages, concurrency, sameDomain,
+          aiEnabled, aiPrompt, aiProvider, aiTimeoutSecs, aiConcurrency } = parsed.data
   const mode = normalizeParseMode(requestedMode)
 
   if (storageState) {
@@ -40,9 +46,16 @@ export async function POST(request: Request) {
     catch { return Response.json({ error: 'storageState must be valid JSON' }, { status: 400 }) }
   }
 
+  if (aiEnabled && !aiPrompt?.trim()) {
+    return Response.json({ error: 'aiPrompt is required when AI post-processing is enabled' }, { status: 400 })
+  }
+
   const id = crypto.randomUUID()
   createJob({ id, url, mode })
-  updateJob(id, { status: 'running' })
+  updateJob(id, {
+    status: 'running',
+    ...(aiEnabled && aiPrompt ? { ai_prompt: aiPrompt, ai_provider: aiProvider } : {}),
+  })
   initProgress(id)
 
   const crawlParams: CrawlParams = {
@@ -51,6 +64,11 @@ export async function POST(request: Request) {
     maxPages: multiPage ? maxPages : 1,
     concurrency: multiPage ? concurrency : 1,
     sameDomain,
+    aiEnabled,
+    aiPrompt: aiEnabled ? aiPrompt : undefined,
+    aiProvider,
+    aiTimeoutMs: aiTimeoutSecs * 1000,
+    aiConcurrency,
   }
 
   // Fire-and-forget: runs in background after response is sent

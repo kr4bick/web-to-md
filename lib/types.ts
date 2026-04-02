@@ -146,4 +146,6 @@ export interface UpdateJobParams {
   summary?: string
   page_count?: number
   image_count?: number
+  ai_prompt?: string
+  ai_provider?: string
 }
