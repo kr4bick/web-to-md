@@ -1,23 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-
-type ParseStatus = 'pending' | 'success' | 'error'
-type ParseMode = 'simple' | 'auth' | 'interactive'
-
-interface ParseJobSummary {
-  id: string
-  url: string
-  final_url: string | null
-  title: string | null
-  status: ParseStatus
-  mode: ParseMode
-  error: string | null
-  created_at: number
-  page_count?: number
-  image_count?: number
-  summary?: string | null
-}
+import type { ParseJobSummary, ParseStatus, StoredParseMode } from '@/lib/types'
 
 function getDomain(url: string): string {
   try {
@@ -33,13 +17,37 @@ function truncate(str: string, max: number): string {
 
 const statusStyles: Record<ParseStatus, string> = {
   success: 'bg-green-100 text-green-700',
+  partial: 'bg-amber-100 text-amber-700',
   error: 'bg-red-100 text-red-600',
   pending: 'bg-gray-100 text-gray-500',
+  running: 'bg-blue-100 text-blue-700',
+}
+
+function formatModeLabel(mode: StoredParseMode): string {
+  switch (mode) {
+    case 'advance':
+      return 'advance'
+    case 'interactive':
+      return 'interactive'
+    case 'auth':
+      return 'auth'
+    default:
+      return 'simple'
+  }
 }
 
 export default function HistoryList({ jobs }: { jobs: ParseJobSummary[] }) {
   if (jobs.length === 0) {
-    return <p className="text-sm text-gray-500">No history yet.</p>
+    return (
+      <div className="flex justify-center">
+        <Link
+          href="/parse"
+          className="inline-flex items-center bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors"
+        >
+          Start parsing
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -72,7 +80,7 @@ export default function HistoryList({ jobs }: { jobs: ParseJobSummary[] }) {
                 <td className="px-4 py-3 text-gray-500">{getDomain(job.url)}</td>
                 <td className="px-4 py-3">
                   <span className="px-2 py-0.5 rounded-md text-xs bg-gray-100 text-gray-600">
-                    {job.mode}
+                    {formatModeLabel(job.mode)}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-700 text-center">

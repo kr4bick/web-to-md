@@ -114,39 +114,29 @@ describe('ParseForm', () => {
     })
   })
 
-  it('Multi-page checkbox shows crawl options when checked', async () => {
-    const user = userEvent.setup()
+  it('Multi-page checkbox is hidden in simple mode', () => {
     render(<ParseForm />)
-
-    // Crawl options should not be visible initially
-    expect(screen.queryByLabelText(/parse linked pages/i)).not.toBeInTheDocument()
-
-    // Check the multi-page checkbox
-    await user.click(screen.getByLabelText(/multi-page crawl/i))
-
-    // Now the sub-options should appear
-    expect(screen.getByLabelText(/parse linked pages/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/multi-page crawl/i)).not.toBeInTheDocument()
   })
 
-  it('Multi-page checkbox hides crawl options when unchecked', async () => {
+  it('Multi-page checkbox visible after switching to Advance mode', async () => {
     const user = userEvent.setup()
     render(<ParseForm />)
 
-    await user.click(screen.getByLabelText(/multi-page crawl/i))
-    expect(screen.getByLabelText(/parse linked pages/i)).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'advance')
 
-    await user.click(screen.getByLabelText(/multi-page crawl/i))
-    expect(screen.queryByLabelText(/parse linked pages/i)).not.toBeInTheDocument()
+    // Selecting advance auto-shows the advanced section
+    expect(screen.getByLabelText(/multi-page crawl/i)).toBeInTheDocument()
   })
 
-  it('parse linked pages checkbox reveals depth/maxPages/concurrency when checked', async () => {
+  it('Multi-page check reveals depth/maxPages/concurrency inputs', async () => {
     const user = userEvent.setup()
     render(<ParseForm />)
 
-    await user.click(screen.getByLabelText(/multi-page crawl/i))
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'advance')
     expect(screen.queryByLabelText(/depth/i)).not.toBeInTheDocument()
 
-    await user.click(screen.getByLabelText(/parse linked pages/i))
+    await user.click(screen.getByLabelText(/multi-page crawl/i))
     expect(screen.getByLabelText(/depth/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/max pages/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/concurrency/i)).toBeInTheDocument()

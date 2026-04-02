@@ -5,7 +5,7 @@ import { convertToMarkdown } from './converter'
 import { downloadImagesForPage } from './images'
 import { extractLinks } from './links'
 import { initProgress, setProgress, deleteProgress, getProgress, addCurrentAsset, removeCurrentAsset, clearCurrentAssets } from './progress'
-import type { CrawlParams, CrawlResult, PageResult, PageImage } from './types'
+import type { CrawlParams, CrawlResult, PageResult, PageImage, ParseMode } from './types'
 
 const PAGE_TIMEOUT_MS = 30_000
 const JOB_TIMEOUT_MS = 5 * 60_000
@@ -88,7 +88,7 @@ interface ProcessPageInput {
   item: { url: string; depth: number; parentUrl: string | null }
   jobId: string
   pageIndex: number
-  mode: string
+  mode: ParseMode
   cookies?: string
   storageState?: string
   waitSelector?: string
@@ -111,7 +111,7 @@ async function processPage(input: ProcessPageInput): Promise<{
 
   const scrapeParams = {
     url: item.url,
-    mode: mode as 'simple' | 'auth' | 'interactive',
+    mode,
     cookies, storageState, waitSelector,
   }
 

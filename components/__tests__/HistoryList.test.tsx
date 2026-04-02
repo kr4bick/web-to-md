@@ -30,9 +30,9 @@ function makeJob(overrides: Partial<ParseJobSummary> = {}): ParseJobSummary {
 }
 
 describe('HistoryList', () => {
-  it('shows "No history yet." when jobs array is empty', () => {
+  it('shows "Start parsing" link when jobs array is empty', () => {
     render(<HistoryList jobs={[]} />)
-    expect(screen.getByText(/no history yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/start parsing/i)).toBeInTheDocument()
   })
 
   it('renders a row per job with URL', () => {
