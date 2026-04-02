@@ -5,16 +5,48 @@ import { convertToMarkdown } from './converter'
 import { downloadImagesForPage } from './images'
 import { extractLinks } from './links'
 import { initProgress, setProgress, deleteProgress, getProgress, addCurrentAsset, removeCurrentAsset, clearCurrentAssets } from './progress'
+import { processWithGemini, GeminiTimeoutError } from './gemini-client'
+import { extractSummary } from './summarize'
 import type { CrawlParams, CrawlResult, PageResult, PageImage, ParseMode } from './types'
 
 const PAGE_TIMEOUT_MS = 30_000
 const JOB_TIMEOUT_MS = 5 * 60_000
 
+/** Simple promise-based semaphore to cap concurrent AI calls. */
+function createSemaphore(limit: number) {
+  let active = 0
+  const queue: Array<() => void> = []
+
+  function release() {
+    active--
+    if (queue.length > 0) {
+      active++
+      queue.shift()!()
+    }
+  }
+
+  function acquire(): Promise<() => void> {
+    return new Promise((resolve) => {
+      if (active < limit) {
+        active++
+        resolve(release)
+      } else {
+        queue.push(() => resolve(release))
+      }
+    })
+  }
+
+  return { acquire }
+}
+
 export async function crawl(params: CrawlParams, jobId: string): Promise<CrawlResult> {
   initProgress(jobId)
 
   const { url: startUrl, mode, cookies, storageState, waitSelector,
-          depth: maxDepth, maxPages, concurrency, sameDomain } = params
+          depth: maxDepth, maxPages, concurrency, sameDomain,
+          aiEnabled, aiPrompt, aiProvider, aiTimeoutMs, aiConcurrency } = params
+
+  const aiSemaphore = createSemaphore(aiConcurrency ?? 2)
 
   const results: PageResult[] = []
   const visited = new Set<string>([normalizeUrl(startUrl)])
@@ -36,6 +68,9 @@ export async function crawl(params: CrawlParams, jobId: string): Promise<CrawlRe
           item, jobId, pageIndex: results.length + idx,
           mode, cookies, storageState, waitSelector,
           maxDepth, sameDomain,
+          aiEnabled, aiPrompt, aiProvider,
+          aiTimeoutMs: aiTimeoutMs ?? 60_000,
+          aiSemaphore,
         }))
       )
 
@@ -94,13 +129,19 @@ interface ProcessPageInput {
   waitSelector?: string
   maxDepth: number
   sameDomain: 'hostname' | 'origin'
+  aiEnabled?: boolean
+  aiPrompt?: string
+  aiProvider?: 'gemini'
+  aiTimeoutMs: number
+  aiSemaphore: ReturnType<typeof createSemaphore>
 }
 
 async function processPage(input: ProcessPageInput): Promise<{
   pageResult: PageResult
   discoveredLinks: string[]
 }> {
-  const { item, jobId, pageIndex, mode, cookies, storageState, waitSelector, maxDepth, sameDomain } = input
+  const { item, jobId, pageIndex, mode, cookies, storageState, waitSelector, maxDepth, sameDomain,
+          aiEnabled, aiPrompt, aiTimeoutMs, aiSemaphore } = input
   const pageNum = String(pageIndex + 1).padStart(3, '0')
   const filename = `page-${pageNum}.md`
 
@@ -156,7 +197,6 @@ async function processPage(input: ProcessPageInput): Promise<{
           addCurrentAsset(jobId, asset)
           return
         }
-
         removeCurrentAsset(jobId, asset)
       },
     )
@@ -170,14 +210,49 @@ async function processPage(input: ProcessPageInput): Promise<{
 
   setProgress(jobId, { currentStep: 'converting to markdown' })
 
-  const markdown = convertToMarkdown(scrapeResult.html, scrapeResult.finalUrl, urlToLocal)
+  const rawMarkdown = convertToMarkdown(scrapeResult.html, scrapeResult.finalUrl, urlToLocal)
 
-  setProgress(jobId, { currentStep: 'saving result' })
-
-  // Save markdown to data/pages/{jobId}/page-NNN.md
+  // Save pages directory
   const pagesDir = path.join(process.cwd(), 'data', 'pages', jobId)
   fs.mkdirSync(pagesDir, { recursive: true })
-  fs.writeFileSync(path.join(pagesDir, filename), markdown, 'utf-8')
+
+  // Always save raw markdown first (baseline / fallback)
+  fs.writeFileSync(path.join(pagesDir, filename), rawMarkdown, 'utf-8')
+
+  // Heuristic summary as fallback
+  let summary = extractSummary(rawMarkdown)
+  let aiStatus: PageResult['aiStatus']
+  let aiError: string | undefined
+
+  if (aiEnabled && aiPrompt) {
+    // Save raw for debugging before AI potentially overwrites the main file
+    fs.writeFileSync(path.join(pagesDir, filename.replace('.md', '.raw.md')), rawMarkdown, 'utf-8')
+
+    setProgress(jobId, { currentStep: 'AI processing' })
+
+    const release = await aiSemaphore.acquire()
+    try {
+      const aiResult = await processWithGemini(aiPrompt, rawMarkdown, scrapeResult.finalUrl, aiTimeoutMs)
+
+      // Overwrite main file with AI-processed markdown
+      fs.writeFileSync(path.join(pagesDir, filename), aiResult.processedMarkdown, 'utf-8')
+
+      if (aiResult.summary) summary = aiResult.summary
+      aiStatus = 'success'
+    } catch (err) {
+      aiStatus = err instanceof GeminiTimeoutError ? 'timeout' : 'error'
+      aiError = err instanceof Error ? err.message : String(err)
+      console.warn(`[crawler] AI processing failed for ${item.url}: ${aiError}`)
+      // Raw markdown stays as the final file — already written above
+    } finally {
+      release()
+    }
+
+    const aiPagesCompleted = (getProgress(jobId)?.aiPagesCompleted ?? 0) + 1
+    setProgress(jobId, { aiPagesCompleted, currentStep: 'saving result' })
+  } else {
+    setProgress(jobId, { currentStep: 'saving result' })
+  }
 
   return {
     pageResult: {
@@ -189,6 +264,9 @@ async function processPage(input: ProcessPageInput): Promise<{
       status: 'success',
       filename,
       images,
+      summary,
+      ...(aiStatus !== undefined && { aiStatus }),
+      ...(aiError !== undefined && { aiError }),
     },
     discoveredLinks,
   }
