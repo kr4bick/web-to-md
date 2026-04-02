@@ -329,22 +329,20 @@ export default function ParseForm() {
                           )}
                         </div>
 
-                        {multiPage && (
-                          <div>
-                            <label htmlFor="aiLinkFilter" className="block text-sm font-medium text-gray-700 mb-1.5">
-                              Link filter
-                              <span className="ml-1.5 text-xs font-normal text-gray-400">AI decides which links to follow</span>
-                            </label>
-                            <textarea
-                              id="aiLinkFilter"
-                              value={aiLinkFilter}
-                              onChange={(e) => setAiLinkFilter(e.target.value)}
-                              placeholder="Only follow links to documentation pages, skip landing pages, blog posts and marketing content."
-                              rows={2}
-                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full"
-                            />
-                          </div>
-                        )}
+                        <div>
+                          <label htmlFor="aiLinkFilter" className="block text-sm font-medium text-gray-700 mb-1.5">
+                            Link filter
+                            <span className="ml-1.5 text-xs font-normal text-gray-400">AI decides which links to follow</span>
+                          </label>
+                          <textarea
+                            id="aiLinkFilter"
+                            value={aiLinkFilter}
+                            onChange={(e) => setAiLinkFilter(e.target.value)}
+                            placeholder="Only follow links to documentation pages, skip landing pages, blog posts and marketing content."
+                            rows={2}
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full"
+                          />
+                        </div>
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                           <div>
