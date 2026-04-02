@@ -116,7 +116,7 @@ export interface CrawlParams extends ScrapeParams {
   sameDomain: 'hostname' | 'origin'
   aiEnabled?: boolean
   aiPrompt?: string
-  aiProvider?: 'gemini'
+  aiProvider?: 'gemini' | 'claude'
   aiTimeoutMs?: number
   aiConcurrency?: number
 }

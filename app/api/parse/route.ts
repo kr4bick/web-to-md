@@ -17,7 +17,7 @@ const schema = z.object({
   sameDomain: z.enum(['hostname', 'origin']).default('hostname'),
   aiEnabled: z.boolean().default(false),
   aiPrompt: z.string().max(2000).optional(),
-  aiProvider: z.enum(['gemini']).default('gemini'),
+  aiProvider: z.enum(['gemini', 'claude']).default('gemini'),
   aiTimeoutSecs: z.number().int().min(10).max(300).default(60),
   aiConcurrency: z.number().int().min(1).max(5).default(2),
 })

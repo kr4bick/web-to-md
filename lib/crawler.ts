@@ -6,6 +6,7 @@ import { downloadImagesForPage } from './images'
 import { extractLinks } from './links'
 import { initProgress, setProgress, deleteProgress, getProgress, addCurrentAsset, removeCurrentAsset, clearCurrentAssets } from './progress'
 import { processWithGemini, GeminiTimeoutError } from './gemini-client'
+import { processWithClaude, ClaudeTimeoutError } from './claude-client'
 import { extractSummary } from './summarize'
 import type { CrawlParams, CrawlResult, PageResult, PageImage, ParseMode } from './types'
 
@@ -232,7 +233,9 @@ async function processPage(input: ProcessPageInput): Promise<{
 
     const release = await aiSemaphore.acquire()
     try {
-      const aiResult = await processWithGemini(aiPrompt, rawMarkdown, scrapeResult.finalUrl, aiTimeoutMs)
+      const aiResult = input.aiProvider === 'claude'
+        ? await processWithClaude(aiPrompt, rawMarkdown, scrapeResult.finalUrl, aiTimeoutMs)
+        : await processWithGemini(aiPrompt, rawMarkdown, scrapeResult.finalUrl, aiTimeoutMs)
 
       // Overwrite main file with AI-processed markdown
       fs.writeFileSync(path.join(pagesDir, filename), aiResult.processedMarkdown, 'utf-8')
@@ -240,7 +243,7 @@ async function processPage(input: ProcessPageInput): Promise<{
       if (aiResult.summary) summary = aiResult.summary
       aiStatus = 'success'
     } catch (err) {
-      aiStatus = err instanceof GeminiTimeoutError ? 'timeout' : 'error'
+      aiStatus = (err instanceof GeminiTimeoutError || err instanceof ClaudeTimeoutError) ? 'timeout' : 'error'
       aiError = err instanceof Error ? err.message : String(err)
       console.warn(`[crawler] AI processing failed for ${item.url}: ${aiError}`)
       // Raw markdown stays as the final file — already written above

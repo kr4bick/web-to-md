@@ -23,7 +23,7 @@ export default function ParseForm() {
 
   const [aiEnabled, setAiEnabled] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
-  const [aiProvider] = useState<'gemini'>('gemini')
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'claude'>('gemini')
   const [aiTimeoutSecs, setAiTimeoutSecs] = useState(60)
   const [aiConcurrency, setAiConcurrency] = useState(2)
   const [aiPromptError, setAiPromptError] = useState<string | null>(null)
@@ -335,10 +335,11 @@ export default function ParseForm() {
                             <select
                               id="aiProvider"
                               value={aiProvider}
-                              disabled
-                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white disabled:opacity-60"
+                              onChange={(e) => setAiProvider(e.target.value as 'gemini' | 'claude')}
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full bg-white"
                             >
                               <option value="gemini">Gemini</option>
+                              <option value="claude">Claude</option>
                             </select>
                           </div>
 
