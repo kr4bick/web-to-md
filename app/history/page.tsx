@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import HistoryList from '@/components/HistoryList'
+import ClearDataButton from '@/components/ClearDataButton'
 
 async function getHistory() {
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
@@ -18,7 +19,10 @@ export default async function HistoryPage() {
             ← Back
           </Link>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-8">History</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">History</h1>
+          <ClearDataButton />
+        </div>
         <HistoryList jobs={jobs} />
       </div>
     </main>

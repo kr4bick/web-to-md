@@ -62,6 +62,10 @@ export function getJob(id: string): ParseJob | undefined {
   return db.prepare('SELECT * FROM parse_jobs WHERE id = ?').get(id) as ParseJob | undefined
 }
 
+export function clearAllJobs(): void {
+  getDb().prepare('DELETE FROM parse_jobs').run()
+}
+
 export function listJobs(): ParseJobSummary[] {
   const db = getDb()
   return db.prepare(`
