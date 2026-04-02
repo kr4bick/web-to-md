@@ -18,7 +18,14 @@ function getAllowedIps(): string[] {
   return env.split(',').map(ip => ip.trim()).filter(Boolean)
 }
 
+const HEALTHCHECK_PATHS = ['/api/history']
+
 export async function proxy(request: NextRequest) {
+  // Allow healthcheck paths through without IP check
+  if (HEALTHCHECK_PATHS.includes(request.nextUrl.pathname)) {
+    return NextResponse.next()
+  }
+
   const clientIp = getClientIp(request)
   const allowedIps = getAllowedIps()
 
