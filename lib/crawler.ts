@@ -7,6 +7,7 @@ import { extractLinks } from './links'
 import { initProgress, setProgress, deleteProgress, getProgress, addCurrentAsset, removeCurrentAsset, clearCurrentAssets } from './progress'
 import { processWithGemini, GeminiTimeoutError } from './gemini-client'
 import { processWithClaude, ClaudeTimeoutError } from './claude-client'
+import { filterLinksWithAI } from './ai-link-filter'
 import { extractSummary } from './summarize'
 import type { CrawlParams, CrawlResult, PageResult, PageImage, ParseMode } from './types'
 
@@ -45,7 +46,7 @@ export async function crawl(params: CrawlParams, jobId: string): Promise<CrawlRe
 
   const { url: startUrl, mode, cookies, storageState, waitSelector,
           depth: maxDepth, maxPages, concurrency, sameDomain,
-          aiEnabled, aiPrompt, aiProvider, aiTimeoutMs, aiConcurrency } = params
+          aiEnabled, aiPrompt, aiProvider, aiTimeoutMs, aiConcurrency, aiLinkFilter } = params
 
   const aiSemaphore = createSemaphore(aiConcurrency ?? 2)
 
@@ -71,6 +72,7 @@ export async function crawl(params: CrawlParams, jobId: string): Promise<CrawlRe
           maxDepth, sameDomain,
           aiEnabled, aiPrompt, aiProvider,
           aiTimeoutMs: aiTimeoutMs ?? 60_000,
+          aiLinkFilter,
           aiSemaphore,
         }))
       )
@@ -134,6 +136,7 @@ interface ProcessPageInput {
   aiPrompt?: string
   aiProvider?: 'gemini' | 'claude'
   aiTimeoutMs: number
+  aiLinkFilter?: string
   aiSemaphore: ReturnType<typeof createSemaphore>
 }
 
@@ -142,7 +145,8 @@ async function processPage(input: ProcessPageInput): Promise<{
   discoveredLinks: string[]
 }> {
   const { item, jobId, pageIndex, mode, cookies, storageState, waitSelector, maxDepth, sameDomain,
-          aiEnabled, aiPrompt, aiTimeoutMs, aiSemaphore } = input
+          aiEnabled, aiPrompt, aiTimeoutMs, aiLinkFilter, aiSemaphore } = input
+  const aiProvider = input.aiProvider ?? 'gemini'
   const pageNum = String(pageIndex + 1).padStart(3, '0')
   const filename = `page-${pageNum}.md`
 
@@ -179,9 +183,26 @@ async function processPage(input: ProcessPageInput): Promise<{
   }
 
   // Extract links before Readability strips them
-  const discoveredLinks = item.depth < maxDepth
+  let discoveredLinks = item.depth < maxDepth
     ? extractLinks(scrapeResult.html, scrapeResult.finalUrl, sameDomain)
     : []
+
+  // AI link filter — runs before markdown conversion so we can use raw HTML context
+  if (discoveredLinks.length > 0 && aiLinkFilter) {
+    const rawMarkdownForFilter = scrapeResult.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    const release = await aiSemaphore.acquire()
+    try {
+      discoveredLinks = await filterLinksWithAI(
+        aiProvider, aiLinkFilter, discoveredLinks,
+        scrapeResult.finalUrl, rawMarkdownForFilter, aiTimeoutMs,
+      )
+    } catch (err) {
+      console.warn(`[crawler] AI link filter failed for ${item.url}: ${err instanceof Error ? err.message : err}`)
+      // fallback: keep all links
+    } finally {
+      release()
+    }
+  }
 
   setProgress(jobId, { currentStep: 'downloading images' })
 

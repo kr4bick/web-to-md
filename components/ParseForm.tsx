@@ -23,6 +23,7 @@ export default function ParseForm() {
 
   const [aiEnabled, setAiEnabled] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
+  const [aiLinkFilter, setAiLinkFilter] = useState('')
   const [aiProvider, setAiProvider] = useState<'gemini' | 'claude'>('gemini')
   const [aiTimeoutSecs, setAiTimeoutSecs] = useState(60)
   const [aiConcurrency, setAiConcurrency] = useState(2)
@@ -82,6 +83,7 @@ export default function ParseForm() {
         body.aiProvider = aiProvider
         body.aiTimeoutSecs = aiTimeoutSecs
         body.aiConcurrency = aiConcurrency
+        if (aiLinkFilter.trim()) body.aiLinkFilter = aiLinkFilter
       }
     }
 
@@ -326,6 +328,23 @@ export default function ParseForm() {
                             <p className="mt-1 text-xs text-red-500">{aiPromptError}</p>
                           )}
                         </div>
+
+                        {multiPage && (
+                          <div>
+                            <label htmlFor="aiLinkFilter" className="block text-sm font-medium text-gray-700 mb-1.5">
+                              Link filter
+                              <span className="ml-1.5 text-xs font-normal text-gray-400">AI decides which links to follow</span>
+                            </label>
+                            <textarea
+                              id="aiLinkFilter"
+                              value={aiLinkFilter}
+                              onChange={(e) => setAiLinkFilter(e.target.value)}
+                              placeholder="Only follow links to documentation pages, skip landing pages, blog posts and marketing content."
+                              rows={2}
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder:text-gray-400 w-full"
+                            />
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                           <div>

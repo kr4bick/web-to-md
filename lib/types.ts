@@ -119,6 +119,7 @@ export interface CrawlParams extends ScrapeParams {
   aiProvider?: 'gemini' | 'claude'
   aiTimeoutMs?: number
   aiConcurrency?: number
+  aiLinkFilter?: string
 }
 
 export interface CrawlResult {

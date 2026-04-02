@@ -20,6 +20,7 @@ const schema = z.object({
   aiProvider: z.enum(['gemini', 'claude']).default('gemini'),
   aiTimeoutSecs: z.number().int().min(10).max(300).default(60),
   aiConcurrency: z.number().int().min(1).max(5).default(2),
+  aiLinkFilter: z.string().max(500).optional(),
 })
 
 function normalizeParseMode(mode: z.infer<typeof schema>['mode']): ParseMode {
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
   }
 
   const { url, mode: requestedMode, cookies, storageState, waitSelector, multiPage, depth, maxPages, concurrency, sameDomain,
-          aiEnabled, aiPrompt, aiProvider, aiTimeoutSecs, aiConcurrency } = parsed.data
+          aiEnabled, aiPrompt, aiProvider, aiTimeoutSecs, aiConcurrency, aiLinkFilter } = parsed.data
   const mode = normalizeParseMode(requestedMode)
 
   if (storageState) {
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
     aiProvider,
     aiTimeoutMs: aiTimeoutSecs * 1000,
     aiConcurrency,
+    aiLinkFilter: aiEnabled && aiLinkFilter?.trim() ? aiLinkFilter : undefined,
   }
 
   // Fire-and-forget: runs in background after response is sent
